@@ -742,6 +742,19 @@ MyMesh::MyMesh(mesh::Radio &radio, mesh::RNG &rng, mesh::RTCClock &rtc, SimpleMe
   //_prefs.rx_delay_base = 10.0f;  enable once new algo fixed
 }
 
+void MyMesh::onSelfChannelMessage(const mesh::GroupChannel& channel, uint32_t timestamp, const char* text) {
+  char formatted[5 + MAX_TEXT_LEN];
+  snprintf(formatted, sizeof(formatted), "You: %s", text);
+
+  mesh::Packet pkt;
+  pkt.header = ROUTE_TYPE_FLOOD;
+  pkt.path_len = 0;
+  pkt.payload_len = 0;
+  pkt._snr = 0;
+
+  onChannelMessageRecv(channel, &pkt, timestamp, formatted);
+}
+
 void MyMesh::begin(bool has_display) {
   BaseChatMesh::begin();
 

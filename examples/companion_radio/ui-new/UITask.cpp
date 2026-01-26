@@ -2,6 +2,9 @@
 #include <helpers/TxtDataHelpers.h>
 #include "../MyMesh.h"
 #include "target.h"
+#ifdef HAS_CARDKB
+  #include "ComposeScreen.h"
+#endif
 
 #ifndef AUTO_OFF_MILLIS
   #define AUTO_OFF_MILLIS     15000   // 15 seconds
@@ -84,6 +87,9 @@ class HomeScreen : public UIScreen {
 #endif
 #if UI_SENSORS_PAGE == 1
     SENSORS,
+#endif
+#ifdef HAS_CARDKB
+    COMPOSE,
 #endif
     SHUTDOWN,
     Count    // keep as last
@@ -368,6 +374,12 @@ public:
       if (sensors_scroll) sensors_scroll_offset = (sensors_scroll_offset+1)%sensors_nb;
       else sensors_scroll_offset = 0;
 #endif
+#ifdef HAS_CARDKB
+    } else if (_page == HomePage::COMPOSE) {
+      display.setColor(DisplayDriver::GREEN);
+      // display.drawXbm((display.width() - 32) / 2, 18, compose_icon, 32, 32);
+      display.drawTextCentered(display.width() / 2, 64 - 11, "send message: " PRESS_LABEL);
+#endif
     } else if (_page == HomePage::SHUTDOWN) {
       display.setColor(DisplayDriver::GREEN);
       display.setTextSize(1);
@@ -420,6 +432,12 @@ public:
     if (c == KEY_ENTER && _page == HomePage::SENSORS) {
       _task->toggleGPS();
       next_sensors_refresh=0;
+      return true;
+    }
+#endif
+#ifdef HAS_CARDKB
+    if (c == KEY_ENTER && _page == HomePage::COMPOSE) {
+      _task->gotoComposeScreen();
       return true;
     }
 #endif
@@ -550,12 +568,19 @@ void UITask::begin(DisplayDriver* display, SensorManager* sensors, NodePrefs* no
   vibration.begin();
 #endif
 
+#ifdef HAS_CARDKB
+  keyboard.begin(&Wire);  // Initialize CardKB on primary I2C
+#endif
+
   ui_started_at = millis();
   _alert_expiry = 0;
 
   splash = new SplashScreen(this);
   home = new HomeScreen(this, &rtc_clock, sensors, node_prefs);
   msg_preview = new MsgPreviewScreen(this, &rtc_clock);
+#ifdef HAS_CARDKB
+  compose = new ComposeScreen(this, &keyboard);
+#endif
   setCurrScreen(splash);
 }
 
@@ -605,7 +630,7 @@ void UITask::newMsg(uint8_t path_len, const char* from_name, const char* text, i
   _msgcount = msgcount;
 
   ((MsgPreviewScreen *) msg_preview)->addPreview(path_len, from_name, text);
-  setCurrScreen(msg_preview);
+  // setCurrScreen(msg_preview);
 
   if (_display != NULL) {
     if (!_display->isOn()) _display->turnOn();
@@ -638,6 +663,11 @@ void UITask::userLedHandler() {
 void UITask::setCurrScreen(UIScreen* c) {
   curr = c;
   _next_refresh = 100;
+}
+
+void UITask::gotoComposeScreen() {
+  ((ComposeScreen*)compose)->reset();
+  setCurrScreen(compose);
 }
 
 /*
