@@ -352,7 +352,12 @@ int  BaseChatMesh::sendMessage(const ContactInfo& recipient, uint32_t timestamp,
   uint32_t t = _radio->getEstAirtimeFor(pkt->getRawLength());
 
   int rc;
-  if (recipient.out_path_len < 0) {
+  // Check if sent locally
+  if (memcmp(recipient.id.pub_key, self_id.pub_key, PUB_KEY_SIZE) == 0) {
+    sendZeroHop(pkt);
+    txt_send_timeout = futureMillis(est_timeout = calcDirectTimeoutMillisFor(t, 0));
+    rc = MSG_SEND_SENT_DIRECT;
+  } else if (recipient.out_path_len < 0) {
     sendFloodScoped(recipient, pkt);
     txt_send_timeout = futureMillis(est_timeout = calcFloodTimeoutMillisFor(t));
     rc = MSG_SEND_SENT_FLOOD;
@@ -378,7 +383,12 @@ int  BaseChatMesh::sendCommandData(const ContactInfo& recipient, uint32_t timest
 
   uint32_t t = _radio->getEstAirtimeFor(pkt->getRawLength());
   int rc;
-  if (recipient.out_path_len < 0) {
+  // Check if sent locally
+  if (memcmp(recipient.id.pub_key, self_id.pub_key, PUB_KEY_SIZE) == 0) {
+    sendZeroHop(pkt);
+    txt_send_timeout = futureMillis(est_timeout = calcDirectTimeoutMillisFor(t, 0));
+    rc = MSG_SEND_SENT_DIRECT;
+  } else if (recipient.out_path_len < 0) {
     sendFloodScoped(recipient, pkt);
     txt_send_timeout = futureMillis(est_timeout = calcFloodTimeoutMillisFor(t));
     rc = MSG_SEND_SENT_FLOOD;

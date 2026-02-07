@@ -744,7 +744,7 @@ MyMesh::MyMesh(mesh::Radio &radio, mesh::RNG &rng, mesh::RTCClock &rtc, SimpleMe
 
 void MyMesh::onSelfChannelMessage(const mesh::GroupChannel& channel, uint32_t timestamp, const char* text) {
   char formatted[5 + MAX_TEXT_LEN];
-  snprintf(formatted, sizeof(formatted), "You: %s", text);
+  snprintf(formatted, sizeof(formatted), "%s: %s", _prefs.node_name, text);
 
   mesh::Packet pkt;
   pkt.header = ROUTE_TYPE_FLOOD;
