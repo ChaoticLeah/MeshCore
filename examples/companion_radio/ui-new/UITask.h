@@ -18,6 +18,9 @@
 #ifdef PIN_VIBRATION
   #include <helpers/ui/GenericVibration.h>
 #endif
+#ifdef HAS_CARDKB
+  #include <helpers/ui/CardKB.h>
+#endif
 
 #include "../AbstractUITask.h"
 #include "../NodePrefs.h"
@@ -30,6 +33,9 @@ class UITask : public AbstractUITask {
 #endif
 #ifdef PIN_VIBRATION
   GenericVibration vibration;
+#endif
+#ifdef HAS_CARDKB
+  CardKB keyboard;
 #endif
   unsigned long _next_refresh, _auto_off;
   NodePrefs* _node_prefs;
@@ -51,6 +57,9 @@ class UITask : public AbstractUITask {
   UIScreen* splash;
   UIScreen* home;
   UIScreen* msg_preview;
+#ifdef HAS_CARDKB
+  UIScreen* compose;
+#endif
   UIScreen* curr;
 
   void userLedHandler();
@@ -73,6 +82,7 @@ public:
   void begin(DisplayDriver* display, SensorManager* sensors, NodePrefs* node_prefs);
 
   void gotoHomeScreen() { setCurrScreen(home); }
+  void gotoComposeScreen();
   void showAlert(const char* text, int duration_millis);
   int  getMsgCount() const { return _msgcount; }
   bool hasDisplay() const { return _display != NULL; }
